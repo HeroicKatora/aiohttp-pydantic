@@ -269,6 +269,9 @@ class Paths:
         spec = self._spec.setdefault(path, {})
         return PathItem(spec)
 
+    def __delitem__(self, path: str):
+        del self._spec[path]
+
 
 class Server:
     def __init__(self, spec: dict):

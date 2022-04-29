@@ -36,6 +36,17 @@ def add_markdown_response(func):
 
 
 class PetDetailsView(PydanticView):
+    NR_VIEWS = 0
+
+    @classmethod
+    def __modify_schema__(cls, oas, request, app, path):
+        import random
+        ua = request.headers.get('user-agent') or ''
+        if cls.NR_VIEWS < 1:
+            del oas.paths[path]
+        cls.NR_VIEWS += 1
+
+
     @add_markdown_response
     async def get(self, id: int, /) -> r404[Error]:
         """

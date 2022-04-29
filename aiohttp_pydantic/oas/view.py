@@ -138,6 +138,7 @@ def _add_http_method_to_oas(
 
 
 def generate_oas(
+    request,
     apps: List[Application],
     version_spec: Optional[str] = None,
     title_spec: Optional[str] = None,
@@ -161,12 +162,17 @@ def generate_oas(
 
                 view: Type[PydanticView] = resource_route.handler
                 info = resource_route.get_info()
-                path = oas.paths[info.get("path", info.get("formatter"))]
+                pathkey = info.get("path", info.get("formatter"))
+                path = oas.paths[pathkey]
                 if resource_route.method == "*":
                     for method_name in view.allowed_methods:
                         _add_http_method_to_oas(oas, path, method_name, view)
                 else:
                     _add_http_method_to_oas(oas, path, resource_route.method, view)
+
+                customization = getattr(view, '__modify_schema__', None)
+                if customization is not None:
+                    customization(oas, request, app, pathkey)
 
     return oas.spec
 
@@ -178,7 +184,7 @@ async def get_oas(request):
     apps = request.app["apps to expose"]
     version_spec = request.app["version_spec"]
     title_spec = request.app["title_spec"]
-    return json_response(generate_oas(apps, version_spec, title_spec))
+    return json_response(generate_oas(request, apps, version_spec, title_spec))
 
 
 async def oas_ui(request):
